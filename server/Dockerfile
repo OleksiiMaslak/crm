@@ -22,4 +22,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE ${PORT:-3000}
 
-CMD ["node", "dist/main.js"]
+CMD ["npm", "run", "start:prod"]

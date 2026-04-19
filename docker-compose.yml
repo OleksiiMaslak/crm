@@ -49,7 +49,7 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
-    command: npm run start:dev
+    command: sh -c "npm run prisma:generate && npm run start:dev"
 
   client:
     build:

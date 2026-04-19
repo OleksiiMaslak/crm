@@ -7,7 +7,6 @@ interface RepositoriesState {
   isFetching: boolean
   isAdding: boolean
   error: string | null
-  addError: string | null
 }
 
 const initialState: RepositoriesState = {
@@ -15,7 +14,6 @@ const initialState: RepositoriesState = {
   isFetching: false,
   isAdding: false,
   error: null,
-  addError: null,
 }
 
 export const fetchRepositories = createAsyncThunk(
@@ -73,9 +71,6 @@ const repositoriesSlice = createSlice({
     clearError(state) {
       state.error = null
     },
-    clearAddError(state) {
-      state.addError = null
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -95,16 +90,14 @@ const repositoriesSlice = createSlice({
       // add
       .addCase(addRepository.pending, (state) => {
         state.isAdding = true
-        state.addError = null
+        state.error = null
       })
       .addCase(addRepository.fulfilled, (state, action) => {
         state.isAdding = false
-        state.addError = null
         state.items.unshift(action.payload)
       })
-      .addCase(addRepository.rejected, (state, action) => {
+      .addCase(addRepository.rejected, (state) => {
         state.isAdding = false
-        state.addError = action.payload as string
       })
       // remove
       .addCase(removeRepository.fulfilled, (state, action) => {
@@ -124,5 +117,5 @@ const repositoriesSlice = createSlice({
   },
 })
 
-export const { clearError, clearAddError } = repositoriesSlice.actions
+export const { clearError } = repositoriesSlice.actions
 export default repositoriesSlice.reducer

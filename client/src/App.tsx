@@ -1,4 +1,4 @@
-import { ConfigProvider, theme } from 'antd'
+import { App as AntApp, ConfigProvider, theme } from 'antd'
 import enUS from 'antd/locale/en_US'
 import ukUA from 'antd/locale/uk_UA'
 import { useMemo } from 'react'
@@ -70,14 +70,16 @@ function App() {
         },
       }}
     >
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <AntApp>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AntApp>
     </ConfigProvider>
   )
 }

@@ -200,11 +200,6 @@
   margin-bottom: 16px;
 }
 
-.add-repo-feedback {
-  min-height: 44px;
-  margin-bottom: 12px;
-}
-
 .ant-spin-container {
   border-radius: var(--ant-table-header-border-radius);
 }
@@ -306,11 +301,6 @@
   .repo-filters-row .ant-select,
   .repo-filters-row .ant-btn {
     width: 100% !important;
-  }
-
-  .add-repo-feedback {
-    min-height: auto;
-    margin-bottom: 5px;
   }
 
   .url-cell {

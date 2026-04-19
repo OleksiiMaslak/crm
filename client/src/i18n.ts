@@ -82,8 +82,11 @@ const resources = {
         repositories: {
           loadFailed: 'Failed to load repositories',
           addFailed: 'Failed to add repository',
+          addSuccess: 'Repository added successfully',
           removeFailed: 'Failed to remove repository',
           refreshFailed: 'Failed to refresh repository',
+          refreshSuccess: 'Repository updated successfully',
+          removeSuccess: 'Repository removed successfully',
         },
       },
     },
@@ -168,8 +171,11 @@ const resources = {
         repositories: {
           loadFailed: 'Не вдалося завантажити репозиторії',
           addFailed: 'Не вдалося додати репозиторій',
+          addSuccess: 'Репозиторій успішно додано',
           removeFailed: 'Не вдалося видалити репозиторій',
           refreshFailed: 'Не вдалося оновити репозиторій',
+          refreshSuccess: 'Репозиторій успішно оновлено',
+          removeSuccess: 'Репозиторій успішно видалено',
         },
       },
     },

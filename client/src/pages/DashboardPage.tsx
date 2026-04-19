@@ -1,4 +1,4 @@
-import { Alert, Button, Form, Input, Select, Space, Table, Tooltip, Typography } from 'antd'
+import { Alert, App, Button, Form, Input, Select, Space, Table, Tooltip, Typography } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -8,7 +8,6 @@ import { logoutUser } from '../store/auth/auth.slice'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import {
   addRepository,
-  clearAddError,
   fetchRepositories,
   refreshRepository,
   removeRepository,
@@ -24,8 +23,9 @@ export function DashboardPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { items, isFetching, isAdding, error, addError } = useAppSelector((s) => s.repositories)
+  const { items, isFetching, isAdding, error } = useAppSelector((s) => s.repositories)
   const { user } = useAppSelector((s) => s.auth)
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
   const [languageFilter, setLanguageFilter] = useState(() => {
@@ -77,7 +77,9 @@ export function DashboardPage() {
     void dispatch(addRepository({ owner, name })).then((action) => {
       if (addRepository.fulfilled.match(action)) {
         form.resetFields()
-        dispatch(clearAddError())
+        void message.success(t('errors.repositories.addSuccess'))
+      } else {
+        void message.error((action.payload as string) || t('errors.repositories.addFailed'))
       }
     })
   }
@@ -225,7 +227,15 @@ export function DashboardPage() {
                 size="small"
                 type="text"
                 style={{ color: 'var(--accent-blue)', fontSize: 13 }}
-                onClick={() => void dispatch(refreshRepository(record.id))}
+                onClick={() =>
+                  void dispatch(refreshRepository(record.id)).then((action) => {
+                    if (refreshRepository.fulfilled.match(action)) {
+                      void message.success(t('errors.repositories.refreshSuccess'))
+                    } else {
+                      void message.error(t('errors.repositories.refreshFailed'))
+                    }
+                  })
+                }
               >
                 ↻
               </Button>
@@ -235,7 +245,15 @@ export function DashboardPage() {
                 size="small"
                 type="text"
                 danger
-                onClick={() => void dispatch(removeRepository(record.id))}
+                onClick={() =>
+                  void dispatch(removeRepository(record.id)).then((action) => {
+                    if (removeRepository.fulfilled.match(action)) {
+                      void message.success(t('errors.repositories.removeSuccess'))
+                    } else {
+                      void message.error(t('errors.repositories.removeFailed'))
+                    }
+                  })
+                }
               >
                 ✕
               </Button>
@@ -244,7 +262,7 @@ export function DashboardPage() {
         ),
       },
     ],
-    [dispatch, i18n.language, t],
+    [dispatch, i18n.language, message, t],
   )
 
   return (
@@ -287,7 +305,6 @@ export function DashboardPage() {
         </div>
 
         {error && <Alert message={error} type="error" showIcon closable style={{ marginBottom: 16 }} />}
-        <div className="add-repo-feedback">{addError && <Alert message={addError} type="error" showIcon />}</div>
 
         <Form form={form} onFinish={handleAdd} className="add-repo-form-row">
           <Form.Item
@@ -303,11 +320,6 @@ export function DashboardPage() {
           >
             <Input
               placeholder={t('dashboard.add.placeholder')}
-              onChange={() => {
-                if (addError) {
-                  dispatch(clearAddError())
-                }
-              }}
               style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}
             />
           </Form.Item>

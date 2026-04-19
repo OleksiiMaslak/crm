@@ -33,7 +33,11 @@ export class RepositoriesController {
 
   @Post()
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateRepositoryDto) {
-    return this.repositoriesService.create(req.user.userId, dto.owner, dto.name);
+    return this.repositoriesService.create(
+      req.user.userId,
+      dto.owner,
+      dto.name,
+    );
   }
 
   @Delete(':id')

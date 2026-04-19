@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RefreshDto } from './dto/refresh.dto';
@@ -10,14 +17,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const session = await this.authService.register(dto);
     this.setRefreshCookie(res, session.refreshToken);
     return this.authService.toAuthResponse(session);
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const session = await this.authService.login(dto);
     this.setRefreshCookie(res, session.refreshToken);
     return this.authService.toAuthResponse(session);

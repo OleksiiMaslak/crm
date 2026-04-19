@@ -95,7 +95,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
@@ -138,7 +141,9 @@ export class AuthService {
     };
   }
 
-  private async verifyRefreshPayload(refreshToken: string): Promise<RefreshPayload> {
+  private async verifyRefreshPayload(
+    refreshToken: string,
+  ): Promise<RefreshPayload> {
     const secrets = this.getRefreshSecretsForVerification();
 
     for (const secret of secrets) {
@@ -170,9 +175,12 @@ export class AuthService {
     } catch {
       // Fallback for clients that only have access token at page reload time.
       try {
-        const accessPayload = await this.jwtService.verifyAsync<AccessPayload>(token, {
-          secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        });
+        const accessPayload = await this.jwtService.verifyAsync<AccessPayload>(
+          token,
+          {
+            secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+          },
+        );
 
         if (!accessPayload?.sub || !accessPayload?.email) {
           throw new UnauthorizedException('Invalid access token');
@@ -200,7 +208,10 @@ export class AuthService {
     );
   }
 
-  private async signAccessToken(userId: string, email: string): Promise<string> {
+  private async signAccessToken(
+    userId: string,
+    email: string,
+  ): Promise<string> {
     const expiresInSeconds = this.getJwtExpiresInSeconds();
 
     return this.jwtService.signAsync(
@@ -212,7 +223,10 @@ export class AuthService {
     );
   }
 
-  private async signRefreshToken(userId: string, email: string): Promise<string> {
+  private async signRefreshToken(
+    userId: string,
+    email: string,
+  ): Promise<string> {
     const expiresInSeconds = Math.floor(this.getRefreshTokenMaxAgeMs() / 1000);
 
     return this.jwtService.signAsync(

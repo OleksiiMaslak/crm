@@ -55,6 +55,7 @@ export class RepositoriesService {
     const normalizedOwner = owner.trim();
     const normalizedName = name.trim();
 
+    // Normalize before validation and duplicate checks so ` Facebook / react ` does not create duplicates.
     this.ensureRepositoryPath(normalizedOwner, normalizedName);
 
     const existing = await this.repositoryModel
@@ -186,6 +187,7 @@ export class RepositoriesService {
     const now = Date.now();
     const minTimestamp = now - this.githubRateWindowMs;
 
+    // Sliding window in memory: enough for a single-node app and avoids hammering GitHub accidentally.
     while (
       this.githubRequestTimestamps.length > 0 &&
       this.githubRequestTimestamps[0] < minTimestamp
@@ -216,6 +218,7 @@ export class RepositoriesService {
       'User-Agent': 'crm-app',
     };
 
+    // Token is optional: anonymous requests still work, just with stricter GitHub rate limits.
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -243,6 +246,7 @@ export class RepositoriesService {
     if (response.status === 403) {
       const remaining = response.headers.get('x-ratelimit-remaining');
 
+      // Distinguish hard rate-limit exhaustion from other temporary 403 responses.
       if (remaining === '0') {
         throw new HttpException(
           'GitHub API rate limit exceeded. Please try again later.',

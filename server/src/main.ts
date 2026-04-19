@@ -19,6 +19,7 @@ async function bootstrap() {
         return;
       }
 
+      // Allow the configured frontend URL plus common local/LAN Vite hosts used during manual testing.
       const isConfiguredOrigin = origin === configuredClientOrigin;
       const isLocalDevOrigin =
         /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):5173$/.test(
@@ -32,6 +33,7 @@ async function bootstrap() {
 
       callback(new Error('Not allowed by CORS'));
     },
+    // Refresh token is stored in an httpOnly cookie, so credentialed requests are required.
     credentials: true,
   });
   app.use(cookieParser());

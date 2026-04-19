@@ -42,6 +42,7 @@ export class AuthController {
     @Body() dto: RefreshDto,
     @Res({ passthrough: true }) res: Response,
   ) {
+    // Cookie is the primary source. Body/header fallback keeps refresh working in local cross-origin setups.
     const refreshToken =
       (req.cookies?.refreshToken as string | undefined) ??
       dto.refreshToken ??
@@ -52,6 +53,7 @@ export class AuthController {
     }
 
     const session = await this.authService.refresh(refreshToken);
+  // Every refresh rotates the cookie as well, so old refresh tokens expire naturally.
     this.setRefreshCookie(res, session.refreshToken);
 
     return this.authService.toAuthResponse(session);
@@ -74,6 +76,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      // Limit the cookie to auth endpoints so it is not sent on unrelated requests.
       path: '/api/auth',
       maxAge: this.authService.getRefreshTokenMaxAgeMs(),
     });

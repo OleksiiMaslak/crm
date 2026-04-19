@@ -37,6 +37,7 @@ export function setupInterceptors(store: AppStore) {
       if (status === 401 && originalRequest && !originalRequest._retry && !isRefreshRequest) {
         originalRequest._retry = true
 
+        // Collapse parallel 401s into one refresh request so several failing API calls do not refresh at once.
         if (!isRefreshing) {
           isRefreshing = true
           refreshPromise = authApi.refresh().finally(() => {
@@ -50,6 +51,7 @@ export function setupInterceptors(store: AppStore) {
             if (!originalRequest.headers) {
               originalRequest.headers = {}
             }
+            // Replay the original request with the fresh access token after refresh succeeds.
             originalRequest.headers.Authorization = `Bearer ${session.accessToken}`
             return http(originalRequest)
           })

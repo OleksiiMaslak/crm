@@ -88,7 +88,7 @@ npm run dev
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token lifetime                        | `7d`                                                            |
 | `DATABASE_URL`         | PostgreSQL connection string                    | `postgresql://crm_user:crm_password@localhost:5433/crm?schema=public` |
 | `MONGO_URI`            | MongoDB connection string                       | `mongodb://localhost:27017/crm`                                 |
-| `GITHUB_TOKEN`         | GitHub personal access token (optional, increases rate limit) | —                                          |
+| `GITHUB_TOKEN`         | GitHub personal access token. Leave empty if you do not have one; the app still works with anonymous GitHub API access, but with stricter rate limits. | — |
 
 ### `client/.env`
 

@@ -144,6 +144,7 @@ export class AuthService {
   private async verifyRefreshPayload(
     refreshToken: string,
   ): Promise<RefreshPayload> {
+    // Accept both the dedicated refresh secret and the legacy access secret during migration/dev.
     const secrets = this.getRefreshSecretsForVerification();
 
     for (const secret of secrets) {
@@ -173,7 +174,8 @@ export class AuthService {
       const refreshPayload = await this.verifyRefreshPayload(token);
       return { sub: refreshPayload.sub, email: refreshPayload.email };
     } catch {
-      // Fallback for clients that only have access token at page reload time.
+      // Fallback for clients that only have an access token during page reload.
+      // This keeps session restore resilient when the browser does not send the refresh cookie.
       try {
         const accessPayload = await this.jwtService.verifyAsync<AccessPayload>(
           token,
@@ -253,6 +255,7 @@ export class AuthService {
     const refreshSecret = this.getRefreshSecret();
     const accessSecret = this.configService.getOrThrow<string>('JWT_SECRET');
 
+    // Dedupe protects the happy path when both secrets intentionally point to the same value.
     return Array.from(new Set([refreshSecret, accessSecret]));
   }
 
@@ -262,6 +265,7 @@ export class AuthService {
   }
 
   private getJwtDurationMs(rawValue: string, fallbackMs: number): number {
+    // Supports compact env syntax like 15m, 7d, 3600s.
     const match = rawValue.trim().match(/^(\d+)([smhd])?$/i);
 
     if (!match) {

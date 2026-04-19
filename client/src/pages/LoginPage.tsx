@@ -1,37 +1,37 @@
-import { Alert, Button, Form, Input, Typography } from 'antd'
-import { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
-import { LanguageSwitcher } from '../components/LanguageSwitcher'
-import { clearError, login } from '../store/auth/auth.slice'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
-import '../App.css'
+import { Alert, Button, Form, Input, Typography } from "antd";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router-dom";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { clearError, login } from "../store/auth/auth.slice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import "../App.css";
 
 type LoginFormValues = {
-  email: string
-  password: string
-}
+  email: string;
+  password: string;
+};
 
 export function LoginPage() {
-  const dispatch = useAppDispatch()
-  const navigate = useNavigate()
-  const { t } = useTranslation()
-  const { isLoading, error, isAuthenticated } = useAppSelector((s) => s.auth)
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { isLoading, error, isAuthenticated } = useAppSelector((s) => s.auth);
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true })
-  }, [isAuthenticated, navigate])
+    if (isAuthenticated) navigate("/dashboard", { replace: true });
+  }, [isAuthenticated, navigate]);
 
   useEffect(
     () => () => {
-      dispatch(clearError())
+      dispatch(clearError());
     },
     [dispatch],
-  )
+  );
 
   const handleSubmit = (values: LoginFormValues) => {
-    void dispatch(login(values))
-  }
+    void dispatch(login(values));
+  };
 
   return (
     <div className="auth-screen">
@@ -44,31 +44,52 @@ export function LoginPage() {
           <LanguageSwitcher />
         </div>
 
-        <Typography.Title className="auth-title">{t('auth.login.title')}</Typography.Title>
-        <p className="auth-subtitle">{t('auth.login.subtitle')}</p>
+        <Typography.Title className="auth-title">
+          {t("auth.login.title")}
+        </Typography.Title>
+        <p className="auth-subtitle">{t("auth.login.subtitle")}</p>
 
-        {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 20 }} />}
+        {error && (
+          <Alert
+            message={error}
+            type="error"
+            showIcon
+            style={{ marginBottom: 20 }}
+          />
+        )}
 
         <Form layout="vertical" onFinish={handleSubmit} requiredMark={false}>
           <Form.Item
-            label={t('auth.emailLabel')}
+            label={t("auth.emailLabel")}
             name="email"
-            rules={[{ required: true, type: 'email', message: t('auth.validation.email') }]}
+            rules={[
+              {
+                required: true,
+                type: "email",
+                message: t("auth.validation.email"),
+              },
+            ]}
           >
             <Input
               type="email"
-              placeholder={t('auth.emailPlaceholder')}
+              placeholder={t("auth.emailPlaceholder")}
               size="large"
               autoComplete="email"
             />
           </Form.Item>
           <Form.Item
-            label={t('auth.passwordLabel')}
+            label={t("auth.passwordLabel")}
             name="password"
-            rules={[{ required: true, min: 8, message: t('auth.validation.passwordMin') }]}
+            rules={[
+              {
+                required: true,
+                min: 8,
+                message: t("auth.validation.passwordMin"),
+              },
+            ]}
           >
             <Input.Password
-              placeholder={t('auth.passwordPlaceholder')}
+              placeholder={t("auth.passwordPlaceholder")}
               size="large"
               autoComplete="current-password"
             />
@@ -80,18 +101,18 @@ export function LoginPage() {
               block
               size="large"
               loading={isLoading}
-              style={{ fontWeight: 600, letterSpacing: '0.2px' }}
+              style={{ fontWeight: 600, letterSpacing: "0.2px" }}
             >
-              {t('auth.login.submit')}
+              {t("auth.login.submit")}
             </Button>
           </Form.Item>
         </Form>
 
         <div className="auth-footer">
-          {t('auth.login.footer')}{' '}
-          <Link to="/register">{t('auth.login.footerLink')}</Link>
+          {t("auth.login.footer")}{" "}
+          <Link to="/register">{t("auth.login.footerLink")}</Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

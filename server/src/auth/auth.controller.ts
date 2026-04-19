@@ -53,7 +53,7 @@ export class AuthController {
     }
 
     const session = await this.authService.refresh(refreshToken);
-  // Every refresh rotates the cookie as well, so old refresh tokens expire naturally.
+    // Every refresh rotates the cookie as well, so old refresh tokens expire naturally.
     this.setRefreshCookie(res, session.refreshToken);
 
     return this.authService.toAuthResponse(session);

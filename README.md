@@ -32,16 +32,17 @@ Users can register, log in, and manage a personal list of GitHub repos — with 
 git clone https://github.com/OleksiiMaslak/crm.git
 cd crm
 
-# 2. Create environment files
-cp server/.env.example server/.env
-cp client/.env.example client/.env
-
-# 3. Start all services
-docker compose up
+# 2. Build images and start all services
+docker compose up --build
 ```
 
 The app will be available at **http://localhost:5173**  
 The API will be available at **http://localhost:3000/api**
+
+Docker Compose uses dedicated env files [server/.env.docker](server/.env.docker) and [client/.env.docker](client/.env.docker), so personal values in [server/.env](server/.env) do not affect container startup.
+
+On startup, the server container automatically applies Prisma migrations (`prisma migrate deploy`) before launching NestJS.
+
 
 ## Local Development (without Docker)
 
@@ -90,11 +91,35 @@ npm run dev
 | `MONGO_URI`            | MongoDB connection string                       | `mongodb://localhost:27017/crm`                                 |
 | `GITHUB_TOKEN`         | GitHub personal access token. Leave empty if you do not have one; the app still works with anonymous GitHub API access, but with stricter rate limits. | — |
 
+### `server/.env.docker`
+
+Used only by Docker Compose.
+
+| Variable               | Default                                                         |
+| ---------------------- | --------------------------------------------------------------- |
+| `PORT`                 | `3000`                                                          |
+| `CLIENT_URL`           | `http://localhost:5173`                                         |
+| `JWT_SECRET`           | `super-secret-key`                                              |
+| `JWT_EXPIRES_IN`       | `15m`                                                           |
+| `JWT_REFRESH_SECRET`   | `super-secret-refresh-key`                                      |
+| `JWT_REFRESH_EXPIRES_IN` | `7d`                                                          |
+| `DATABASE_URL`         | `postgresql://crm_user:crm_password@postgres:5432/crm?schema=public` |
+| `MONGO_URI`            | `mongodb://mongo:27017/crm`                                     |
+| `GITHUB_TOKEN`         | empty                                                           |
+
 ### `client/.env`
 
 | Variable        | Description         | Default                      |
 | --------------- | ------------------- | ---------------------------- |
 | `VITE_API_URL`  | Backend API base URL | `http://localhost:3000/api` |
+
+### `client/.env.docker`
+
+Used only by Docker Compose.
+
+| Variable        | Default                      |
+| --------------- | ---------------------------- |
+| `VITE_API_URL`  | `http://localhost:3000/api` |
 
 ## Project Structure
 

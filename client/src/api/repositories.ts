@@ -12,6 +12,9 @@ export interface Repository {
   forks: number;
   openIssues: number;
   createdAtUtcUnix: number;
+  status?: "pending" | "processing" | "ready" | "failed";
+  errorMessage?: string;
+  githubSyncedAt?: number | null;
 }
 
 export const repositoriesApi = {

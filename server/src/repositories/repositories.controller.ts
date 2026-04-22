@@ -12,6 +12,7 @@ import {
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateRepositoryDto } from './dto/create-repository.dto';
+import { RepositorySyncQueueService } from './repository-sync-queue.service';
 import { RepositoriesService } from './repositories.service';
 
 type AuthenticatedRequest = Request & {
@@ -24,7 +25,10 @@ type AuthenticatedRequest = Request & {
 @Controller('repositories')
 @UseGuards(JwtAuthGuard)
 export class RepositoriesController {
-  constructor(private readonly repositoriesService: RepositoriesService) {}
+  constructor(
+    private readonly repositoriesService: RepositoriesService,
+    private readonly repositorySyncQueueService: RepositorySyncQueueService,
+  ) {}
 
   @Get()
   findAll(@Req() req: AuthenticatedRequest) {
@@ -32,12 +36,19 @@ export class RepositoriesController {
   }
 
   @Post()
-  create(@Req() req: AuthenticatedRequest, @Body() dto: CreateRepositoryDto) {
-    return this.repositoriesService.create(
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateRepositoryDto,
+  ) {
+    const repository = await this.repositoriesService.create(
       req.user.userId,
       dto.owner,
       dto.name,
     );
+
+    await this.repositorySyncQueueService.enqueue(repository.id);
+
+    return repository;
   }
 
   @Delete(':id')
@@ -46,7 +57,14 @@ export class RepositoriesController {
   }
 
   @Patch(':id/refresh')
-  refresh(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.repositoriesService.refresh(req.user.userId, id);
+  async refresh(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    const repository = await this.repositoriesService.refresh(
+      req.user.userId,
+      id,
+    );
+
+    await this.repositorySyncQueueService.enqueue(repository.id);
+
+    return repository;
   }
 }

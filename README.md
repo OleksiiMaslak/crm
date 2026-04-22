@@ -11,14 +11,15 @@ Users can register, log in, and manage a personal list of GitHub repos — with 
 | Backend  | NestJS 11, TypeScript                           |
 | Auth DB  | PostgreSQL 16 + Prisma ORM                      |
 | Repo DB  | MongoDB 7 + Mongoose                           |
+| Queue    | BullMQ + Redis                                  |
 | DevOps   | Docker, Docker Compose                          |
 
 ## Features
 
 - **Auth** — register / login via email + password, JWT access token + httpOnly refresh cookie
 - **Repository list** — owner, name, URL, stars, forks, open issues, created date
-- **Add repository** — enter `owner/name` (e.g. `facebook/react`), data is fetched from GitHub API and saved
-- **Refresh** — re-fetch latest stats from GitHub with one click
+- **Add repository** — enter `owner/name` (e.g. `facebook/react`), repository is created instantly and synced in the background
+- **Refresh** — enqueue background re-sync with one click
 - **Delete** — remove a repository from your list
 - **Filters** — search by name/owner/URL, filter by language and star count
 - **i18n** — English / Ukrainian language switcher
@@ -42,6 +43,8 @@ The API will be available at **http://localhost:3000/api**
 Docker Compose uses dedicated env files [server/.env.docker](server/.env.docker) and [client/.env.docker](client/.env.docker), so personal values in [server/.env](server/.env) do not affect container startup.
 
 On startup, the server container automatically applies Prisma migrations (`prisma migrate deploy`) before launching NestJS.
+
+Background synchronization runs in a dedicated `server-worker` container (BullMQ worker), separate from the API container.
 
 
 ## Local Development (without Docker)
@@ -89,6 +92,7 @@ npm run dev
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token lifetime                        | `7d`                                                            |
 | `DATABASE_URL`         | PostgreSQL connection string                    | `postgresql://crm_user:crm_password@localhost:5433/crm?schema=public` |
 | `MONGO_URI`            | MongoDB connection string                       | `mongodb://localhost:27017/crm`                                 |
+| `REDIS_URL`            | Redis connection string for BullMQ queue        | `redis://localhost:6379`                                         |
 | `GITHUB_TOKEN`         | GitHub personal access token. Leave empty if you do not have one; the app still works with anonymous GitHub API access, but with stricter rate limits. | — |
 
 ### `server/.env.docker`
@@ -105,6 +109,7 @@ Used only by Docker Compose.
 | `JWT_REFRESH_EXPIRES_IN` | `7d`                                                          |
 | `DATABASE_URL`         | `postgresql://crm_user:crm_password@postgres:5432/crm?schema=public` |
 | `MONGO_URI`            | `mongodb://mongo:27017/crm`                                     |
+| `REDIS_URL`            | `redis://redis:6379`                                             |
 | `GITHUB_TOKEN`         | empty                                                           |
 
 ### `client/.env`
@@ -156,7 +161,7 @@ crm/
 
 | Method | Path              | Description                          |
 | ------ | ----------------- | ------------------------------------ |
-| GET    | `/`               | List all repositories for current user |
-| POST   | `/`               | Add repository by `owner` + `name`   |
+| GET    | `/`               | List all repositories for current user (with sync status) |
+| POST   | `/`               | Add repository by `owner` + `name` and enqueue background sync   |
 | DELETE | `/:id`            | Delete repository                    |
-| PATCH  | `/:id/refresh`    | Re-fetch data from GitHub API        |
+| PATCH  | `/:id/refresh`    | Enqueue background re-fetch from GitHub API        |

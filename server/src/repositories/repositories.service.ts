@@ -4,13 +4,18 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
-import { Repository, RepositoryDocument } from './schemas/repository.schema';
+import {
+  Repository,
+  RepositoryDocument,
+  RepositorySyncStatus,
+} from './schemas/repository.schema';
 
 type GithubRepositoryResponse = {
   html_url: string;
@@ -33,6 +38,9 @@ type RepositoryLean = Repository & {
   forks: number;
   openIssues: number;
   createdAtUtcUnix: number;
+  status: RepositorySyncStatus;
+  errorMessage: string;
+  githubSyncedAt: number | null;
   _id: {
     toString: () => string;
   };
@@ -40,6 +48,7 @@ type RepositoryLean = Repository & {
 
 @Injectable()
 export class RepositoriesService {
+  private readonly logger = new Logger(RepositoriesService.name);
   private readonly repositoryPathPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
   private readonly githubRateWindowMs = 60_000;
   private readonly githubRateMaxRequests = 300;
@@ -70,24 +79,20 @@ export class RepositoriesService {
       throw new ConflictException('Repository already added');
     }
 
-    const githubData = await this.fetchRepository(
-      normalizedOwner,
-      normalizedName,
-    );
-
     const created = await this.repositoryModel.create({
       userId,
       owner: normalizedOwner,
       name: normalizedName,
-      url: githubData.html_url,
-      description: githubData.description ?? '',
-      language: githubData.language ?? '',
-      stars: githubData.stargazers_count,
-      forks: githubData.forks_count,
-      openIssues: githubData.open_issues_count,
-      createdAtUtcUnix: Math.floor(
-        new Date(githubData.created_at).getTime() / 1000,
-      ),
+      url: '',
+      description: '',
+      language: '',
+      stars: 0,
+      forks: 0,
+      openIssues: 0,
+      createdAtUtcUnix: 0,
+      status: RepositorySyncStatus.Pending,
+      errorMessage: '',
+      githubSyncedAt: null,
     });
 
     const createdRepository = await this.repositoryModel
@@ -139,20 +144,8 @@ export class RepositoriesService {
       throw new NotFoundException('Repository not found');
     }
 
-    const githubData = await this.fetchRepository(
-      repository.owner,
-      repository.name,
-    );
-
-    repository.url = githubData.html_url;
-    repository.description = githubData.description ?? '';
-    repository.language = githubData.language ?? '';
-    repository.stars = githubData.stargazers_count;
-    repository.forks = githubData.forks_count;
-    repository.openIssues = githubData.open_issues_count;
-    repository.createdAtUtcUnix = Math.floor(
-      new Date(githubData.created_at).getTime() / 1000,
-    );
+    repository.status = RepositorySyncStatus.Pending;
+    repository.errorMessage = '';
 
     await repository.save();
 
@@ -165,6 +158,49 @@ export class RepositoriesService {
     }
 
     return this.toResponse(refreshedRepository);
+  }
+
+  async processRepositorySync(repositoryId: string) {
+    const repository = await this.repositoryModel.findById(repositoryId);
+
+    if (!repository) {
+      return;
+    }
+
+    repository.status = RepositorySyncStatus.Processing;
+    repository.errorMessage = '';
+    await repository.save();
+
+    try {
+      const githubData = await this.fetchRepository(
+        repository.owner,
+        repository.name,
+      );
+
+      repository.url = githubData.html_url;
+      repository.description = githubData.description ?? '';
+      repository.language = githubData.language ?? '';
+      repository.stars = githubData.stargazers_count;
+      repository.forks = githubData.forks_count;
+      repository.openIssues = githubData.open_issues_count;
+      repository.createdAtUtcUnix = Math.floor(
+        new Date(githubData.created_at).getTime() / 1000,
+      );
+      repository.status = RepositorySyncStatus.Ready;
+      repository.errorMessage = '';
+      repository.githubSyncedAt = Math.floor(Date.now() / 1000);
+
+      await repository.save();
+    } catch (error) {
+      repository.status = RepositorySyncStatus.Failed;
+      repository.errorMessage = this.getSyncErrorMessage(error);
+      repository.githubSyncedAt = Math.floor(Date.now() / 1000);
+      await repository.save();
+
+      this.logger.warn(
+        `Repository sync failed for ${repository.owner}/${repository.name}: ${repository.errorMessage}`,
+      );
+    }
   }
 
   private ensureRepositoryPath(owner: string, name: string) {
@@ -282,6 +318,22 @@ export class RepositoriesService {
       forks: repo.forks,
       openIssues: repo.openIssues,
       createdAtUtcUnix: repo.createdAtUtcUnix,
+      status: repo.status,
+      errorMessage: repo.errorMessage ?? '',
+      githubSyncedAt: repo.githubSyncedAt ?? null,
     };
+  }
+
+  private getSyncErrorMessage(error: unknown): string {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof (error as { message?: unknown }).message === 'string'
+    ) {
+      return (error as { message: string }).message;
+    }
+
+    return 'Failed to synchronize repository data';
   }
 }

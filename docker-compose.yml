@@ -31,6 +31,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: crm-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   server:
     build:
       context: ./server
@@ -41,15 +55,29 @@ services:
       - ./server/.env.docker
     ports:
       - '3000:3000'
-    volumes:
-      - ./server:/app
-      - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
       mongo:
         condition: service_healthy
-    command: sh -c "npm install && npx prisma migrate deploy && npm run prisma:generate && npm run start:dev"
+      redis:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+
+  server-worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: crm-server-worker
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.docker
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run start:worker:prod
 
   client:
     build:
@@ -71,3 +99,4 @@ services:
 volumes:
   postgres_data:
   mongo_data:
+  redis_data:

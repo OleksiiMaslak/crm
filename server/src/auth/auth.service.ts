@@ -29,12 +29,6 @@ type RefreshPayload = {
   type: 'refresh';
 };
 
-type AccessPayload = {
-  sub: string;
-  email: string;
-  type?: string;
-};
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -119,7 +113,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<AuthSession> {
-    const payload = await this.verifyRefreshOrAccessPayload(refreshToken);
+    const payload = await this.verifyRefreshPayload(refreshToken);
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -165,34 +159,6 @@ export class AuthService {
     }
 
     throw new UnauthorizedException('Invalid refresh token');
-  }
-
-  private async verifyRefreshOrAccessPayload(
-    token: string,
-  ): Promise<{ sub: string; email: string }> {
-    try {
-      const refreshPayload = await this.verifyRefreshPayload(token);
-      return { sub: refreshPayload.sub, email: refreshPayload.email };
-    } catch {
-      // Fallback for clients that only have an access token during page reload.
-      // This keeps session restore resilient when the browser does not send the refresh cookie.
-      try {
-        const accessPayload = await this.jwtService.verifyAsync<AccessPayload>(
-          token,
-          {
-            secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-          },
-        );
-
-        if (!accessPayload?.sub || !accessPayload?.email) {
-          throw new UnauthorizedException('Invalid access token');
-        }
-
-        return { sub: accessPayload.sub, email: accessPayload.email };
-      } catch {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-    }
   }
 
   toAuthResponse(session: AuthSession): AuthResponse {

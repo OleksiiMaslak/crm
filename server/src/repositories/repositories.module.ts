@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from '../auth/auth.module';
+import { RepositorySyncQueueService } from './repository-sync-queue.service';
 import { RepositoriesController } from './repositories.controller';
 import { RepositoriesService } from './repositories.service';
 import { Repository, RepositorySchema } from './schemas/repository.schema';
 
 @Module({
   imports: [
-    AuthModule,
     MongooseModule.forFeature([
       {
         name: Repository.name,
@@ -16,7 +15,7 @@ import { Repository, RepositorySchema } from './schemas/repository.schema';
     ]),
   ],
   controllers: [RepositoriesController],
-  providers: [RepositoriesService],
+  providers: [RepositoriesService, RepositorySyncQueueService],
   exports: [MongooseModule, RepositoriesService],
 })
 export class RepositoriesModule {}

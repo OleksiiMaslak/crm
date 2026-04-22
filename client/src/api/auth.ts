@@ -21,14 +21,8 @@ export const authApi = {
   login: (payload: AuthPayload) =>
     http.post<AuthResponse>("/auth/login", payload).then((r) => r.data),
 
-  refresh: (accessToken?: string) =>
-    http
-      .post<AuthResponse>("/auth/refresh", undefined, {
-        headers: accessToken
-          ? { Authorization: `Bearer ${accessToken}` }
-          : undefined,
-      })
-      .then((r) => r.data),
+  refresh: () =>
+    http.post<AuthResponse>("/auth/refresh").then((r) => r.data),
 
   logout: () =>
     http.post<{ success: boolean }>("/auth/logout").then((r) => r.data),

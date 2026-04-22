@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import i18n from "../../i18n";
 import { authApi } from "../../api/auth";
-import type { RootState } from "../index";
 
 interface User {
   id: string;
@@ -75,10 +74,9 @@ export const login = createAsyncThunk(
 
 export const restoreSession = createAsyncThunk(
   "auth/restoreSession",
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const state = getState() as RootState;
-      return await authApi.refresh(state.auth.token ?? undefined);
+      return await authApi.refresh();
     } catch {
       return rejectWithValue(i18n.t("errors.auth.sessionRestoreFailed"));
     }

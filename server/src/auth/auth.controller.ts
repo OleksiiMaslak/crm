@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { RefreshDto } from './dto/refresh.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -39,14 +38,9 @@ export class AuthController {
   @Post('refresh')
   async refresh(
     @Req() req: Request,
-    @Body() dto: RefreshDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    // Cookie is the primary source. Body/header fallback keeps refresh working in local cross-origin setups.
-    const refreshToken =
-      (req.cookies?.refreshToken as string | undefined) ??
-      dto.refreshToken ??
-      this.extractBearerToken(req.headers.authorization);
+    const refreshToken = req.cookies?.refreshToken as string | undefined;
 
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing');
@@ -80,18 +74,5 @@ export class AuthController {
       path: '/api/auth',
       maxAge: this.authService.getRefreshTokenMaxAgeMs(),
     });
-  }
-
-  private extractBearerToken(authorizationHeader?: string): string | undefined {
-    if (!authorizationHeader) {
-      return undefined;
-    }
-
-    const [scheme, token] = authorizationHeader.split(' ');
-    if (scheme !== 'Bearer' || !token) {
-      return undefined;
-    }
-
-    return token;
   }
 }

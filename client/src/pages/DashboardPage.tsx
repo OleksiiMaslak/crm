@@ -266,26 +266,42 @@ export function DashboardPage() {
         key: "createdAtUtcUnix",
         sorter: (a: Repository, b: Repository) =>
           a.createdAtUtcUnix - b.createdAtUtcUnix,
-        render: (timestamp: number) => (
-          <Tooltip title={t("dashboard.table.createdTooltip", { timestamp })}>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 12,
-                color: "var(--text-secondary)",
-              }}
-            >
-              {new Date(timestamp * 1000).toLocaleDateString(
-                i18n.language.startsWith("uk") ? "uk-UA" : "en-US",
-                {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                },
-              )}
-            </span>
-          </Tooltip>
-        ),
+        render: (timestamp: number) => {
+          if (timestamp <= 0) {
+            return (
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                -
+              </span>
+            );
+          }
+
+          return (
+            <Tooltip title={t("dashboard.table.createdTooltip", { timestamp })}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {new Date(timestamp * 1000).toLocaleDateString(
+                  i18n.language.startsWith("uk") ? "uk-UA" : "en-US",
+                  {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  },
+                )}
+              </span>
+            </Tooltip>
+          );
+        },
       },
       {
         title: t("dashboard.table.actions"),

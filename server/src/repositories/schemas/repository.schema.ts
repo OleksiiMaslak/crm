@@ -3,6 +3,13 @@ import { HydratedDocument } from 'mongoose';
 
 export type RepositoryDocument = HydratedDocument<Repository>;
 
+export enum RepositorySyncStatus {
+  Pending = 'pending',
+  Processing = 'processing',
+  Ready = 'ready',
+  Failed = 'failed',
+}
+
 @Schema({
   timestamps: true,
   collection: 'repositories',
@@ -37,6 +44,19 @@ export class Repository {
 
   @Prop({ required: true })
   createdAtUtcUnix!: number;
+
+  @Prop({
+    required: true,
+    enum: Object.values(RepositorySyncStatus),
+    default: RepositorySyncStatus.Pending,
+  })
+  status!: RepositorySyncStatus;
+
+  @Prop({ default: '' })
+  errorMessage!: string;
+
+  @Prop({ type: Number, default: null })
+  githubSyncedAt!: number | null;
 }
 
 export const RepositorySchema = SchemaFactory.createForClass(Repository);
